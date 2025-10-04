@@ -35,6 +35,6 @@ int exec_Test(const std::vector<Node> &result, const std::string &output_name, l
     /*
     I get the address of vector, i need to iterate through 
     */
-
-    return total_time;
+    printf("Current memory usage: %d. Execute operator %s, resulting in a memory usage of %d. Total execution time: %d", current_Mem_Usage, result.getName(), result.getRunMem);
+    return total_Time;
 }
