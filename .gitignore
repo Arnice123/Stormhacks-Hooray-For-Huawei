@@ -2,3 +2,4 @@
 *.sqlite
 src/*.o
 recomputation.exe
+.vscode/settings.json

@@ -6,6 +6,100 @@
 
 std::vector<Node> TopoSearch::ExecuteOrder(const std::vector<Node> &all_nodes, const std::string &output_name, long total_memory)
 {
+    std::vector<TopoSearch::topologicalInfo> graph_info = preProccess(all_nodes);
+    std::vector<Node> topoResult = kahnAlgorithm(graph_info);
+
+    std::vector<Node> result;
+    int memory_in_use = 0;
+
+    int n = graph_info.size();
+
+    std::priority_queue<ReadyNodeInfo, std::vector<ReadyNodeInfo>, std::greater<ReadyNodeInfo>> ready_queue;
+
+    std::unordered_map<int, TopoSearch::topologicalInfo> active_outputs;
+
+    for (int i = 0; i < n; ++i)
+    {
+        if (graph_info[i].indegrees == 0)
+        {
+            const Node &node = graph_info[i].node;
+            double ratio = (double)node.timeCost() / node.outputMem();
+
+            ready_queue.push({i, node, ratio});
+        }
+    }
+
+    while (!ready_queue.empty())
+    {
+        ReadyNodeInfo current = ready_queue.top();
+        ready_queue.pop();
+
+        Node node = current.node;
+
+        long required_mem = node.runMem() + node.outputMem();
+
+        if (memory_in_use + required_mem > total_memory)
+        {
+            std::vector<std::pair<int, double>> eviction_candidates;
+            for (auto &kv : active_outputs)
+            {
+                const auto &info = kv.second;
+                const Node &no = info.node;
+                double score = (double)info.future_use_count / ((double)no.outputMem() * (double)no.timeCost());
+                eviction_candidates.push_back({kv.first, score});
+            }
+
+            std::sort(eviction_candidates.begin(), eviction_candidates.end(), [](auto &a, auto &b)
+                      { return a.second < b.second; });
+
+            for (auto &pair : eviction_candidates)
+            {
+                int idx = pair.first;
+                const Node &evicted = active_outputs[idx].node;
+                memory_in_use -= evicted.outputMem();
+                active_outputs.erase(idx);
+                if (memory_in_use + required_mem <= total_memory)
+                    break;
+            }
+
+            if (memory_in_use + required_mem > total_memory)
+            {
+                // find the smallest subtree using topograph
+                continue;
+            }
+
+            memory_in_use+= required_mem;
+            active_outputs[current.index] = graph_info[current.index];
+
+            result.push_back(node);
+
+            for (int dep: graph_info[current.index].adj)
+            {
+                --graph_info[dep].indegrees;
+                if (graph_info[dep].indegrees == 0)
+                {
+                    const Node &node = graph_info[dep].node;
+                    double ratio = (double)node.timeCost() / node.outputMem();
+
+                    ready_queue.push({dep, node, ratio});
+                }
+            }
+
+            for (auto it = active_outputs.begin(); it != active_outputs.end();)
+            {
+                it->second.future_use_count--;
+                if (it->second.future_use_count <= 0)
+                {
+                    memory_in_use -= it->second.node.outputMem();
+                    it = active_outputs.erase(it);
+                }
+                else
+                    ++it;
+            }
+        }
+    }
+
+    return result;
 }
 
 std::vector<TopoSearch::topologicalInfo> TopoSearch::preProccess(const std::vector<Node> &all_nodes)
@@ -34,6 +128,11 @@ std::vector<TopoSearch::topologicalInfo> TopoSearch::preProccess(const std::vect
         }
     }
 
+    for (int i = 0; i < info.size(); ++i)
+    {
+        info[i].future_use_count = info[i].adj.size();
+    }
+
     return info;
 }
 
@@ -55,7 +154,7 @@ std::vector<Node> TopoSearch::kahnAlgorithm(std::vector<TopoSearch::topologicalI
     {
         int u_index = q.front();
         q.pop();
-        topological_order.push_back(info[u_index].node); 
+        topological_order.push_back(info[u_index].node);
 
         for (int v_index : info[u_index].adj)
         {

@@ -12,6 +12,15 @@ private:
         int future_use_count = 0;
     };
 
+    struct ReadyNodeInfo {
+        int index;
+        const Node& node;
+        double ratio;
+        bool operator>(const ReadyNodeInfo &other) const {
+            return ratio > other.ratio;
+        }
+    };
+
     std::vector<topologicalInfo> preProccess(const std::vector<Node> &all_nodes);
     std::vector<Node> TopoSearch::kahnAlgorithm(std::vector<topologicalInfo> info);
 
