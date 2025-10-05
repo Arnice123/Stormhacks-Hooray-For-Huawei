@@ -27,7 +27,7 @@ struct Scheduler {
 
     bool ensure(int v) { return ensure_node(v); }
 
-    std::vector<Node> take_order() { return std::move(order_); }
+    std::vector<int> take_order() { return std::move(order_indices_); }
 
     long long peak_mem() const { return peak_mem_; }
     long long total_time() const { return total_time_; }
@@ -95,7 +95,7 @@ private:
         materialized_[v] = true;
         peak_mem_ = std::max(peak_mem_, live_mem_);
         total_time_ += nodes_[v].getTimeCost();
-        order_.push_back(nodes_[v]);
+        order_indices_.push_back(v);
 
         in_progress_[v] = false;
         return true;
@@ -159,7 +159,7 @@ private:
     long long live_mem_ = 0;
     long long peak_mem_ = 0;
     long long total_time_ = 0;
-    std::vector<Node> order_;
+    std::vector<int> order_indices_;
 };
 
 } // namespace
@@ -179,12 +179,12 @@ Topology build_topology(const std::vector<Node>& nodes) {
     }
 
     for (int v = 0; v < N; ++v) {
-        const auto& inNodes = nodes[v].getInputs();
-        T.inDeg[v] = static_cast<int>(inNodes.size());
-        for (const auto& inNode : inNodes) {
-            auto it = id_to_index.find(inNode.getId());
+        const auto& input_ids = nodes[v].getInputIds();
+        T.inDeg[v] = static_cast<int>(input_ids.size());
+        for (int input_id : input_ids) {
+            auto it = id_to_index.find(input_id);
             if (it == id_to_index.end()) {
-                throw std::runtime_error("Unknown input id: " + std::to_string(inNode.getId()));
+                throw std::runtime_error("Unknown input id: " + std::to_string(input_id));
             }
             int u = it->second;
             T.consumerCount[u] += 1;
@@ -195,7 +195,7 @@ Topology build_topology(const std::vector<Node>& nodes) {
     return T;
 }
 
-std::vector<Node> ExecuteOrder(const std::vector<Node>& all_nodes,
+std::vector<int> ExecuteOrder(const std::vector<Node>& all_nodes,
                                const std::string& /*output_name*/,
                                long long total_memory) {
     g_have_last_stats = false;
@@ -230,7 +230,9 @@ std::vector<Node> ExecuteOrder(const std::vector<Node>& all_nodes,
     return scheduler.take_order();
 }
 
-void PrintOrderTimeAndPeak(const std::vector<Node>& order, std::ostream& os)
+void PrintOrderTimeAndPeak(const std::vector<Node>& nodes,
+                           const std::vector<int>& order,
+                           std::ostream& os)
 {
     if (g_have_last_stats) {
         os << "Running time: " << g_last_total_time << "\n"
@@ -248,19 +250,21 @@ void PrintOrderTimeAndPeak(const std::vector<Node>& order, std::ostream& os)
     consumerCount.reserve(order.size() * 2);
     outMem.reserve(order.size() * 2);
 
-    for (const auto& n : order) {
+    for (int idx : order) {
+        const Node& n = nodes[idx];
         outMem[n.getId()] = n.getOutputMem();
-        for (const auto& in : n.getInputs()) {
-            consumerCount[in.getId()] += 1;
+        for (int input_id : n.getInputIds()) {
+            consumerCount[input_id] += 1;
         }
     }
 
-    for (const auto& v : order) {
+    for (int idx : order) {
+        const Node& v = nodes[idx];
         long long freed = 0;
-        for (const auto& in : v.getInputs()) {
-            auto it = consumerCount.find(in.getId());
+        for (int input_id : v.getInputIds()) {
+            auto it = consumerCount.find(input_id);
             if (it != consumerCount.end() && --(it->second) == 0) {
-                if (auto jt = outMem.find(in.getId()); jt != outMem.end()) {
+                if (auto jt = outMem.find(input_id); jt != outMem.end()) {
                     freed += jt->second;
                 }
             }
