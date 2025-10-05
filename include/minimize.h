@@ -8,11 +8,11 @@ class MinimizeRecomputation {
         /// @param output_name no clue
         /// @param total_memory Maximum memory usage
         /// @return List of Nodes in a valid order that uses no more than @param total_memory
-        std::vector<Node> ExecuteOrder(const std::vector<Node> &all_nodes, const std::string &output_name,
+        static std::vector<Node> ExecuteOrder(const std::vector<Node> &all_nodes, const std::string &output_name,
                                     long total_memory);
     private:
         /// @brief Returns the maximum amount of memory a given sequence of Nodes uses to compute.
         /// @param nodes List of nodes.
         /// @return Maximum amount of memory a given sequence of Nodes uses to compute.
-        long maxMemorySpike(const std::vector<Node> &nodes);
+        static long maxMemorySpike(const std::vector<Node> &nodes);
 };
