@@ -17,19 +17,19 @@ public:
     int runMem() const { return run_mem_; }
     int outputMem() const { return output_mem_; }
     int timeCost() const { return time_cost_; }
-    std::vector<std::shared_ptr<Node>>& inputs() { return inputs_; }
+    std::vector<Node>& inputs() { return inputs_; }
 
     // setters
     void setRunMem(int runMem) { run_mem_ = runMem; }
     void setOutputMem(int outputMem) { output_mem_ = outputMem; }
     void setTimeCost(int cost) { time_cost_ = cost; }
-    const std::vector<std::shared_ptr<Node>>& inputs() const { return inputs_; }
+    const std::vector<Node>& inputs() const { return inputs_; }
     
     
 
 private:
     std::string name_;
-    std::vector<std::shared_ptr<Node>> inputs_;
+    std::vector<Node> inputs_;
     int run_mem_;
     int output_mem_;
     int time_cost_;
