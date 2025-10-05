@@ -3,3 +3,5 @@
 src/*.o
 recomputation.exe
 .vscode/settings.json
+*.json
+.vscode/c_cpp_properties.json
