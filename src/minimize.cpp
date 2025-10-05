@@ -1,4 +1,5 @@
 #include "minimize.h"
+#include <algorithm>
 
 std::vector<Node> MinimizeRecomputation::ExecuteOrder(const std::vector<Node> &all_nodes, const std::string &output_name,
                                                       long total_memory) {
@@ -17,6 +18,20 @@ std::vector<Node> MinimizeRecomputation::ExecuteOrder(const std::vector<Node> &a
         std::string maxMemUsageName = maxMemUsageNameItr->first;
         Node maxMemUsageNode = nameToNode.at(maxMemUsageName);
 
+        for (auto itr = nodes.begin(); itr != nodes.end(); itr++) {
+            Node curr = *itr;
+            std::vector<Node> currInputs = curr.getInputs();
+
+            auto nodeIsMaxMem = [&] (Node a) {
+                return a.getName() == maxMemUsageName;
+            };
+
+            if (std::find_if(currInputs.begin(), currInputs.end(), nodeIsMaxMem) != currInputs.end()) {
+                nodes.insert(itr, maxMemUsageNode);
+            }
+        }
+
+        memoryUsage = MinimizeRecomputation::maxMemorySpike(nodes);
     }
 
     return nodes;
