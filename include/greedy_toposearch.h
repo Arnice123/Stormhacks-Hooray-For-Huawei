@@ -4,7 +4,6 @@ class TopoSearch {
 public:
     std::vector<Node> ExecuteOrder(const std::vector<Node> &all_nodes, const std::string &output_name, long total_memory);
 
-private:
     struct topologicalInfo {
         Node node;
         std::vector<int> adj;
@@ -14,21 +13,13 @@ private:
 
     struct ReadyNodeInfo {
         int index;
-        const Node& node;
-        double ratio;
+        double ratio;        
         bool operator>(const ReadyNodeInfo &other) const {
             return ratio > other.ratio;
         }
     };
 
+private:
     std::vector<TopoSearch::topologicalInfo> preProccess(const std::vector<Node> &all_nodes);
-    std::vector<Node> TopoSearch::kahnAlgorithm(std::vector<TopoSearch::topologicalInfo> info);
-
-    /*
-    std::vector<std::vector<int>> createAdjList(const std::vector<Node> &all_nodes);
-    std::vector<int> computeIndegrees(const std::vector<Node> &all_nodes);
-    std::vector<Node> kahnAlgorithm(const std::vector<Node> &all_nodes, std::vector<std::vector<int>> adjList, std::vector<int> indegrees);
-    std::vector<int> computeCountOfDependeces(const std::vector<std::vector<int>> & adjList);*/
+    std::vector<Node> kahnAlgorithm(std::vector<TopoSearch::topologicalInfo> info);
 };
-
-

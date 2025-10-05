@@ -3,6 +3,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <cctype>
+#include <vector>
 
 static inline void ltrim(std::string& s){ size_t i=0; while(i<s.size()&&std::isspace((unsigned char)s[i])) ++i; s.erase(0,i); }
 static inline void rtrim(std::string& s){ size_t i=s.size(); while(i>0&&std::isspace((unsigned char)s[i-1])) --i; s.erase(i); }
@@ -34,11 +35,11 @@ ParseResult parse_stream(std::istream& is) {
                     if (!(hs >> tok1) || !is_int(tok1)) {
                         throw std::runtime_error("Header line must be: Return <int>");
                     }
-                    result.max_memory = std::stoi(tok1);
+                    result.max_memory = std::stoll(tok1);
                     header_consumed = true;
                     continue; // move on to node lines
                 } else if (is_int(tok0)) {
-                    result.max_memory = std::stoi(tok0);
+                    result.max_memory = std::stoll(tok0);
                     header_consumed = true;
                     continue;
                 } else {
@@ -50,7 +51,8 @@ ParseResult parse_stream(std::istream& is) {
 
         // Node line format (required): id name arity <input_ids...> run_mem output_mem time_cost
         std::istringstream ss(line);
-        int id = -1, arity = 0, run_mem = 0, output_mem = 0, time_cost = 0;
+        int id = -1, arity = 0;
+        long long run_mem = 0, output_mem = 0, time_cost = 0;
         std::string name;
 
         if (!(ss >> id >> name >> arity)) {
@@ -68,11 +70,26 @@ ParseResult parse_stream(std::istream& is) {
             }
             inputs.push_back(result.nodes[(size_t)in_id]); // copy (simple model)
         }
-        if (!(ss >> run_mem >> output_mem >> time_cost)) {
+
+        std::vector<long long> tail;
+        tail.reserve(3);
+        long long value = 0;
+        while (ss >> value) {
+            tail.push_back(value);
+        }
+        if (tail.empty()) {
             throw std::runtime_error("Missing tail ints (run_mem output_mem time_cost) on line: " + line);
         }
+        if (tail.size() > 3) {
+            throw std::runtime_error("Too many tail ints on line: " + line);
+        }
 
-        result.nodes.emplace_back(name, inputs, run_mem, output_mem, time_cost);
+        run_mem = tail[0];
+        output_mem = (tail.size() >= 2) ? tail[1] : 0;
+        time_cost = (tail.size() >= 3) ? tail[2] : 0;
+
+        std::string id_name = std::to_string(id);
+        result.nodes.emplace_back(id_name, inputs, run_mem, output_mem, time_cost);
 
         if (name == "Return" && !inputs.empty()) {
             result.output_name = inputs.front().getName();

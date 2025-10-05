@@ -1,6 +1,6 @@
 CXX = g++
-CXXFLAGS = -Wall -Wextra -Iinclude
-
+#CXXFLAGS = -Wall -Wextra -Iinclude
+CXXFLAGS = -Iinclude
 SRC = $(wildcard src/*.cpp)
 OBJ = $(SRC:.cpp=.o)
 TARGETS = recomputation test_parser
