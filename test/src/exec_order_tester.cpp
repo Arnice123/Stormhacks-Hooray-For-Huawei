@@ -1,4 +1,5 @@
 /**
+<<<<<<< HEAD
  * This program tests that our ExecuteOrder function runs properly.
  * 
  * It will take parsed test cases from Parser(...), Run ExecuteOrder(...), and Display the results of the test
@@ -17,6 +18,8 @@ int main() {
     printf("Total time small_test_1: %d", exec_Test(small_Test_1_Solution, /* outputName*/, sm_Test_Data.max_memory, sm_Test_Data.nodes.size()));
 }
 /**
+=======
+>>>>>>> 39901426c9e2862ce773666c7f81955a33bfebbb
  *  This function will track current memory usage, current executing node, and total execution time.
  *  It will also confirm if the execution of a node is legal and if the current memory usage stays below max memory.
  *  
@@ -28,6 +31,7 @@ int main() {
  *  returns:
  *  int total_time - The time it takes to execute the DAG
  */
+<<<<<<< HEAD
 int exec_Test(const std::vector<Node> &result, const std::string &output_name, long total_memory, int total_Nodes) {
     int total_Time = 0;
     int current_Mem_Usage = 0;
@@ -38,3 +42,6 @@ int exec_Test(const std::vector<Node> &result, const std::string &output_name, l
 
     return total_time;
 }
+=======
+
+>>>>>>> 39901426c9e2862ce773666c7f81955a33bfebbb
