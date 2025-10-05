@@ -1,6 +1,7 @@
 #include "mats.h"
 #include <algorithm>
 #include <vector>
+#include <queue>
 #include <string>
 #include <unordered_map>
 #include <stdexcept>
@@ -14,6 +15,20 @@ long long g_last_total_time = 0;
 bool g_have_last_stats = false;
 
 struct Scheduler {
+    struct EvictEntry {
+        long long mem;
+        bool is_dead;
+        std::size_t ticket;
+        int node;
+    };
+
+    struct EvictCompare {
+        bool operator()(const EvictEntry& a, const EvictEntry& b) const {
+            if (a.is_dead != b.is_dead) return a.is_dead < b.is_dead;
+            if (a.mem != b.mem) return a.mem < b.mem;
+            return a.node > b.node;
+        }
+    };
     Scheduler(const std::vector<Node>& nodes,
               const Topology& topo,
               long long total_memory)
@@ -232,12 +247,24 @@ std::vector<int> ExecuteOrder(const std::vector<Node>& all_nodes,
 
 void PrintOrderTimeAndPeak(const std::vector<Node>& nodes,
                            const std::vector<int>& order,
-                           std::ostream& os)
+                           std::ostream& os,
+                           bool show_peak)
 {
     if (g_have_last_stats) {
-        os << "Running time: " << g_last_total_time << "\n"
-           << "Peak memory:  " << g_last_peak_mem << "\n";
+        os << "Running time: " << g_last_total_time << "\n";
+        if (show_peak) {
+            os << "Peak memory:  " << g_last_peak_mem << "\n";
+        }
         g_have_last_stats = false;
+        return;
+    }
+
+    if (!show_peak) {
+        long long total_time = 0;
+        for (int idx : order) {
+            total_time += nodes[idx].getTimeCost();
+        }
+        os << "Running time: " << total_time << "\n";
         return;
     }
 
@@ -278,6 +305,6 @@ void PrintOrderTimeAndPeak(const std::vector<Node>& nodes,
         total_time += v.getTimeCost();
     }
 
-    os << "Running time: " << total_time << "\n"
-       << "Peak memory:  " << peak_mem << "\n";
+    os << "Running time: " << total_time << "\n";
+    os << "Peak memory:  " << peak_mem << "\n";
 }
