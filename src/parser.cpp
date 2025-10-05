@@ -73,6 +73,10 @@ ParseResult parse_stream(std::istream& is) {
         }
 
         result.nodes.emplace_back(name, inputs, run_mem, output_mem, time_cost);
+
+        if (name == "Return" && !inputs.empty()) {
+            result.output_name = inputs.front().getName();
+        }
     }
 
     return result;

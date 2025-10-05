@@ -8,6 +8,7 @@
 struct ParseResult {
     int max_memory = 0;          // From the first line of the file
     std::vector<Node> nodes;     // All operator nodes
+    std::string output_name;
 };
 
 // Parse the file and return both the node list and memory cap.
