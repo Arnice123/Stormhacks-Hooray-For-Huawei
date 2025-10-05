@@ -64,7 +64,7 @@ int main(int argc, char** argv){
         std::cout << "(node listing suppressed in summary mode; see file)\n";
     }
 
-    std::cout << "Optimized schedule metrics:\n";
+    std::cout << "Schedule metrics:\n";
     PrintOrderTimeAndPeak(r.nodes, order, std::cout, show_peak);
 
     if (!summary_mode) {
