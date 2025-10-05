@@ -1,6 +1,6 @@
 #include <iostream>
+#include "parser.h"
 
-int main() {
-    std::cout << "Hi!" << std::endl;
-    return 0;
+int main(int argc, char** argv){
+    ParseResult r = parse_file(argv[1]);
 }

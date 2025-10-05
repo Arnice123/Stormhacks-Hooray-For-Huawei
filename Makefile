@@ -3,15 +3,15 @@ CXXFLAGS = -Wall -Wextra -Iinclude
 
 SRC = $(wildcard src/*.cpp)
 OBJ = $(SRC:.cpp=.o)
-TARGET = recomputation
+TARGETS = recomputation test_parser
 
-all: $(TARGET)
+all: $(TARGETS)
 
-$(TARGET): $(OBJ)
+$(TARGETS): $(OBJ)
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
 src/%.o: src/%.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	rm -f src/*.o $(TARGET)
+	rm -f src/*.o $(TARGETS)
