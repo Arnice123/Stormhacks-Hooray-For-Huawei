@@ -6,8 +6,8 @@
 
 // Container for the entire parsed file.
 struct ParseResult {
-    int max_memory = 0;          // From the first line of the file
-    std::vector<Node> nodes;     // All operator nodes
+    long long max_memory = 0;     // From the first line of the file
+    std::vector<Node> nodes;      // All operator nodes
     std::string output_name;
 };
 

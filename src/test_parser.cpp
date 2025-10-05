@@ -14,19 +14,24 @@ int main(int argc, char** argv) {
         ParseResult r = parse_file(argv[1]);
 
         std::cout << "Max memory: " << r.max_memory << "\n";
-        std::cout << "Graph output: " 
+        std::cout << "Graph output: "
                   << (r.output_name.empty() ? "(unset)" : r.output_name) << "\n";
         std::cout << "Parsed " << r.nodes.size() << " nodes\n\n";
 
         for (size_t i = 0; i < r.nodes.size(); ++i) {
             const Node& n = r.nodes[i];
             std::cout << i << ": " << n.getName() << "\n  Inputs: ";
-            const auto& ins = n.getInputs();
+            const auto& ins = n.getInputIds();
             if (ins.empty()) {
                 std::cout << "(none)";
             } else {
                 for (size_t j = 0; j < ins.size(); ++j) {
-                    std::cout << ins[j].getName();
+                    int idx = ins[j];
+                    if (idx >= 0 && static_cast<size_t>(idx) < r.nodes.size()) {
+                        std::cout << idx << "(" << r.nodes[idx].getName() << ")";
+                    } else {
+                        std::cout << idx << "(<invalid>)";
+                    }
                     if (j + 1 < ins.size()) std::cout << ", ";
                 }
             }
