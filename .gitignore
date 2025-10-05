@@ -1,3 +1,5 @@
 *.vsidx
 *.sqlite
 src/*.o
+recomputation.exe
+test_parser.exe
