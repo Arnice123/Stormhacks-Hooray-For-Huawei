@@ -23,8 +23,24 @@ long MinimizeRecomputation::maxMemorySpike(const std::vector<Node> &nodes) {
         Node currNode = *riter;
         if (!nodesInMemory.at(currNode.getName())) {
             curr += currNode.getOutputMem();
-            nodesInMemory[currNode.getName()]  = true;
+            nodesInMemory[currNode.getName()] = true;
         }
+
+        std::vector<Node> currNodeInputs = currNode.getInputs();
+        for (auto iter2 = currNodeInputs.begin(); iter2 != currNodeInputs.end(); iter2++) {
+            Node currInputNode = *iter2;
+
+            if (!nodesInMemory.at(currInputNode.getName())) {
+                curr += currInputNode.getOutputMem();
+                nodesInMemory[currInputNode.getName()] = true;
+            }
+        }
+
+        if (curr > max) {
+            max = curr;
+        }
+        curr -= currNode.getOutputMem();
+        nodesInMemory[currNode.getName()] = false;
     }
     return max;
 }
