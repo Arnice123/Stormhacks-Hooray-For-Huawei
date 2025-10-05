@@ -1,4 +1,10 @@
 # Stormhacks-Huawei-Challenge-2
+## Emails
+cam45@sfu.ca
+aka310@sfu.ca
+mafa104@sfu.ca
+ma2441@outlook.com
+
 ## Inspiration
 It seemed like an interesting challenge that would be fun to take on together.
 
