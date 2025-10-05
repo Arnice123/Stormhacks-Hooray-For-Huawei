@@ -1,23 +1,38 @@
 CXX = g++
 CXXFLAGS = -Wall -Wextra -Iinclude
 
+# Source files
 SRC = $(wildcard src/*.cpp)
 OBJ = $(SRC:.cpp=.o)
-TARGET = recomputation
 
-TEST_SRC = tester/tester.cpp
-TEST_TARGET = tester
+# Main program
+MAIN_OBJ = src/main.o
+# Library objects (exclude main)
+LIB_OBJ = $(filter-out $(MAIN_OBJ), $(OBJ))
+
+# Test files
+TEST_SRC = $(wildcard test/*.cpp)
+TEST_OBJ = $(TEST_SRC:.cpp=.o)
+
+TARGET = recomputation
+TEST_TARGET1 = tester_exec
+TEST_TARGET2 = tester_parser
 
 all: $(TARGET)
+
+tests: $(TEST_TARGET1) $(TEST_TARGET2)
 
 $(TARGET): $(OBJ)
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
-$(TEST_TARGET): $(OBJ) $(TEST_SRC)
-	$(CXX) $(CXXFLAGS) -o $@ $(TEST_SRC) $(OBJ)
+$(TEST_TARGET1): test/exec_order_tester.o $(LIB_OBJ)
+	$(CXX) $(CXXFLAGS) -o $@ $^
 
-src/%.o: src/%.cpp
+$(TEST_TARGET2): test/test_parser.o $(LIB_OBJ)
+	$(CXX) $(CXXFLAGS) -o $@ $^
+
+%.o: %.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
-	rm -f src/*.o $(TARGET) $(TEST_TARGET)
+	rm -f src/*.o test/*.o $(TARGET) $(TEST_TARGET1) $(TEST_TARGET2)
