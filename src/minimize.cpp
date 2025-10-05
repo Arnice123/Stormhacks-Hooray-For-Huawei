@@ -9,7 +9,16 @@ std::vector<Node> MinimizeRecomputation::ExecuteOrder(const std::vector<Node> &a
 
     std::vector<Node> nodes = all_nodes;
     long memoryUsage = MinimizeRecomputation::maxMemorySpike(nodes);
-    while (memoryUsage > total_memory) {
+    std::map<std::string, long> outputMemories = getNodeOutputMemories(nodes);
+    std::map<std::string, Node> nameToNode = getNameToNode(nodes);
+
+    for (auto maxMemUsageNameItr = outputMemories.rbegin();
+         memoryUsage > total_memory && maxMemUsageNameItr != outputMemories.rend();
+         maxMemUsageNameItr++) {
+
+        std::string maxMemUsageName = maxMemUsageNameItr->first;
+        Node maxMemUsageNode = nameToNode.at(maxMemUsageName);
+
     }
 
     return nodes;
@@ -43,4 +52,26 @@ long MinimizeRecomputation::maxMemorySpike(const std::vector<Node> &nodes) {
         nodesInMemory[currNode.getName()] = false;
     }
     return max;
+}
+
+std::map<std::string, long> getNodeOutputMemories(const std::vector<Node> &nodes) {
+    std::map<std::string, long> memories;
+
+    for (auto itr = nodes.begin(); itr != nodes.end(); itr++) {
+        Node node = *itr;
+        memories[node.getName()] = node.getOutputMem();
+    }
+
+    return memories;
+}
+
+std::map<std::string, Node> getNameToNode(const std::vector<Node> &nodes) {
+    std::map<std::string, Node> nameToNode;
+
+    for (auto itr = nodes.begin(); itr != nodes.end(); itr++) {
+        Node node = *itr;
+        nameToNode[node.getName()] = node;
+    }
+
+    return nameToNode;
 }
