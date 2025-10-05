@@ -21,8 +21,8 @@ private:
         }
     };
 
-    std::vector<topologicalInfo> preProccess(const std::vector<Node> &all_nodes);
-    std::vector<Node> TopoSearch::kahnAlgorithm(std::vector<topologicalInfo> info);
+    std::vector<TopoSearch::topologicalInfo> preProccess(const std::vector<Node> &all_nodes);
+    std::vector<Node> TopoSearch::kahnAlgorithm(std::vector<TopoSearch::topologicalInfo> info);
 
     /*
     std::vector<std::vector<int>> createAdjList(const std::vector<Node> &all_nodes);

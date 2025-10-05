@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <string>
 #include <queue>
+#include <algorithm>
 
 std::vector<Node> TopoSearch::ExecuteOrder(const std::vector<Node> &all_nodes, const std::string &output_name, long total_memory)
 {

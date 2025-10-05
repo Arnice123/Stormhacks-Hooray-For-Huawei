@@ -4,33 +4,37 @@
 #include <memory>
 
 class Node {
-public:
-    // Constructor
-    Node(std::string name, int runMem, int outputMem, int timeCost)
-        : name_(std::move(name)),
-          run_mem_(runMem),
-          output_mem_(outputMem),
-          time_cost_(timeCost) {}
-
-    // getter
-    const std::string& name() const { return name_; }
-    int runMem() const { return run_mem_; }
-    int outputMem() const { return output_mem_; }
-    int timeCost() const { return time_cost_; }
-    std::vector<Node>& inputs() { return inputs_; }
-
-    // setters
-    void setRunMem(int runMem) { run_mem_ = runMem; }
-    void setOutputMem(int outputMem) { output_mem_ = outputMem; }
-    void setTimeCost(int cost) { time_cost_ = cost; }
-    const std::vector<Node>& inputs() const { return inputs_; }
-    
-    
-
 private:
-    std::string name_;
-    std::vector<Node> inputs_;
-    int run_mem_;
-    int output_mem_;
-    int time_cost_;
+    std::string name_;              // The name of the operator node (e.g., Add, Mul, etc.)
+    std::vector<Node> inputs_;      // All input nodes of the operator node
+    int run_mem_;                   // Memory required for the operator's computation process
+    int output_mem_;                // Memory occupied by the operator's computation result
+    int time_cost_;                 // Time taken for the operator's computation
+public:
+    // Constructors
+    Node() : run_mem_(0), output_mem_(0), time_cost_(0) {}
+    Node(const std::string& name,
+         const std::vector<Node>& inputs,
+         int run_mem,
+         int output_mem,
+         int time_cost)
+        : name_(name),
+          inputs_(inputs),
+          run_mem_(run_mem),
+          output_mem_(output_mem),
+          time_cost_(time_cost) {}
+    
+    // Accessors
+    const std::string& getName() const { return name_; }
+    const std::vector<Node>& getInputs() const { return inputs_; }
+    int getRunMem() const { return run_mem_; }
+    int getOutputMem() const { return output_mem_; }
+    int getTimeCost() const { return time_cost_; }
+    
+    // Mutators
+    void setName(const std::string& name) { name_ = name; }
+    void setInputs(const std::vector<Node>& inputs) { inputs_ = inputs; }
+    void setRunMem(int run_mem) { run_mem_ = run_mem; }
+    void setOutputMem(int output_mem) { output_mem_ = output_mem; }
+    void setTimeCost(int time_cost) { time_cost_ = time_cost; }
 };
