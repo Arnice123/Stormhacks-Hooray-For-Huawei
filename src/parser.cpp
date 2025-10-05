@@ -1,139 +1,87 @@
 #include "parser.h"
-#include "node.h"
-
 #include <fstream>
 #include <sstream>
-#include <unordered_map>
-#include <unordered_set>
 #include <stdexcept>
 #include <cctype>
-#include <vector>
-#include <string>
-#include <memory>
 
-// ---------- helpers ----------
-static bool isCommentOrBlank(const std::string& s) {
-    bool seen_non_space = false;
-    for (char ch : s) {
-        if (ch == '#') return true;                    // treat as comment line
-        if (!std::isspace(static_cast<unsigned char>(ch)))
-            seen_non_space = true;
-    }
-    return !seen_non_space; // true if blank, false otherwise
+static inline void ltrim(std::string& s){ size_t i=0; while(i<s.size()&&std::isspace((unsigned char)s[i])) ++i; s.erase(0,i); }
+static inline void rtrim(std::string& s){ size_t i=s.size(); while(i>0&&std::isspace((unsigned char)s[i-1])) --i; s.erase(i); }
+static inline void trim(std::string& s){ ltrim(s); rtrim(s); }
+
+static inline bool is_int(const std::string& s){
+    if (s.empty()) return false;
+    size_t i = (s[0]=='+' || s[0]=='-') ? 1 : 0;
+    if (i >= s.size()) return false;
+    for (; i < s.size(); ++i) if (!std::isdigit((unsigned char)s[i])) return false;
+    return true;
 }
 
-static std::vector<std::string> splitTokens(const std::string& line) {
-    std::istringstream iss(line);
-    std::vector<std::string> toks;
-    std::string t;
-    while (iss >> t) toks.push_back(t);
-    return toks;
-}
-
-// ---------- main parse ----------
-ParseResult parseFile(const std::string& filename) {
-    std::ifstream fin(filename);
-    if (!fin) {
-        throw std::runtime_error("Failed to open file: " + filename);
-    }
-
+ParseResult parse_stream(std::istream& is) {
+    ParseResult result;
     std::string line;
+    bool header_consumed = false;
 
-    // 1) Read total memory (first non-blank, non-comment line)
-    long totalMem = -1;
-    while (std::getline(fin, line)) {
-        if (isCommentOrBlank(line)) continue;
-        auto toks = splitTokens(line);
-        if (toks.empty()) continue;
-        try {
-            totalMem = std::stol(toks[0]);
-        } catch (...) {
-            throw std::runtime_error("First non-comment line must be the total memory limit");
-        }
-        break;
-    }
-    if (totalMem < 0) {
-        throw std::runtime_error("Missing total memory line at top of file");
-    }
+    while (std::getline(is, line)) {
+        trim(line);
+        if (line.empty() || line[0] == '#') continue;
 
-    // 2) Single-pass: create nodes in order, link inputs immediately (topological order assumed)
-    std::unordered_map<std::string, std::shared_ptr<Node>> byName;
-    std::unordered_map<std::string, int> consumerCount; // counts how many consumers each node has
-    std::vector<std::shared_ptr<Node>> nodes;
-    std::vector<std::string> order;
-    byName.reserve(1024);
-    consumerCount.reserve(1024);
-
-    while (std::getline(fin, line)) {
-        if (isCommentOrBlank(line)) continue;
-        auto toks = splitTokens(line);
-        if (toks.size() < 4) {
-            throw std::runtime_error("Each node line must be: name run_mem output_mem time_cost [inputs...]");
-        }
-
-        const std::string& name = toks[0];
-        if (byName.count(name)) {
-            throw std::runtime_error("Duplicate node definition for: " + name);
-        }
-
-        int runMem   = 0;
-        int outMem   = 0;
-        int timeCost = 0;
-        try {
-            runMem   = std::stoi(toks[1]);
-            outMem   = std::stoi(toks[2]);
-            timeCost = std::stoi(toks[3]);
-        } catch (...) {
-            throw std::runtime_error("Bad numeric field for node: " + name);
-        }
-
-        auto node = std::make_shared<Node>(name, runMem, outMem, timeCost);
-
-        // Link inputs immediately (must already exist because of topological order)
-        auto& in = node->inputs();
-        for (size_t i = 4; i < toks.size(); ++i) {
-            const std::string& dep = toks[i];
-            auto it = byName.find(dep);
-            if (it == byName.end()) {
-                throw std::runtime_error(
-                    "Forward reference not allowed (file must be in topological order): " + dep +
-                    " (referenced by " + name + ")"
-                );
+        // Consume the header once: "Return <MAX_MEMORY>" OR just "<MAX_MEMORY>"
+        if (!header_consumed) {
+            std::istringstream hs(line);
+            std::string tok0, tok1;
+            if (hs >> tok0) {
+                if (tok0 == "Return") {
+                    if (!(hs >> tok1) || !is_int(tok1)) {
+                        throw std::runtime_error("Header line must be: Return <int>");
+                    }
+                    result.max_memory = std::stoi(tok1);
+                    header_consumed = true;
+                    continue; // move on to node lines
+                } else if (is_int(tok0)) {
+                    result.max_memory = std::stoi(tok0);
+                    header_consumed = true;
+                    continue;
+                } else {
+                    // Not a memory header; fall through and parse as a node line
+                    header_consumed = true;
+                }
             }
-            in.push_back(it->second);
-            consumerCount[dep] += 1; // record that 'dep' has one more consumer
         }
 
-        // Insert node
-        byName.emplace(name, node);
-        if (!consumerCount.count(name)) consumerCount[name] = 0; // ensure present with default 0
-        order.push_back(name);
-        nodes.push_back(std::move(node));
-    }
+        // Node line format (required): id name arity <input_ids...> run_mem output_mem time_cost
+        std::istringstream ss(line);
+        int id = -1, arity = 0, run_mem = 0, output_mem = 0, time_cost = 0;
+        std::string name;
 
-    if (nodes.empty()) {
-        throw std::runtime_error("No nodes found in file after memory line");
-    }
-
-    // 3) Infer output node(s): nodes with zero consumers
-    std::vector<std::shared_ptr<Node>> outputs;
-    outputs.reserve(2);
-    for (const auto& nname : order) {
-        if (consumerCount[nname] == 0) {
-            outputs.push_back(byName[nname]);
+        if (!(ss >> id >> name >> arity)) {
+            throw std::runtime_error("Malformed node line (expected: id name arity ...): " + line);
         }
-    }
-    if (outputs.empty()) {
-        throw std::runtime_error("No output node found (cycle? or every node consumed by another?)");
+        if (id < 0 || arity < 0) {
+            throw std::runtime_error("Negative id/arity not allowed: " + line);
+        }
+        std::vector<Node> inputs;
+        inputs.reserve((size_t)arity);
+        for (int i = 0; i < arity; ++i) {
+            int in_id = -1;
+            if (!(ss >> in_id) || in_id < 0 || (size_t)in_id >= result.nodes.size()) {
+                throw std::runtime_error("Input id not yet defined or invalid on line: " + line);
+            }
+            inputs.push_back(result.nodes[(size_t)in_id]); // copy (simple model)
+        }
+        if (!(ss >> run_mem >> output_mem >> time_cost)) {
+            throw std::runtime_error("Missing tail ints (run_mem output_mem time_cost) on line: " + line);
+        }
+
+        result.nodes.emplace_back(name, inputs, run_mem, output_mem, time_cost);
     }
 
-    // If multiple zero-consumer nodes, pick the last defined for determinism
-    std::shared_ptr<Node> chosen_output = outputs.back();
+    return result;
+}
 
-    // 4) Build result
-    ParseResult res;
-    res.total_memory = totalMem;
-    res.nodes        = std::move(nodes);
-    res.output       = std::move(chosen_output);
-    return res;
+ParseResult parse_file(const std::string& path) {
+    std::ifstream ifs(path);
+    if (!ifs.is_open()) {
+        throw std::runtime_error("Failed to open file: " + path);
+    }
+    return parse_stream(ifs);
 }

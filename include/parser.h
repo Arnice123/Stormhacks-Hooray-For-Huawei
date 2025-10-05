@@ -1,14 +1,15 @@
 #pragma once
-#include <memory>
 #include <string>
 #include <vector>
+#include <istream>
+#include "node.h"
 
-class Node;
-
+// Container for the entire parsed file.
 struct ParseResult {
-    long total_memory;
-    std::vector<std::shared_ptr<Node>> nodes;
-    std::shared_ptr<Node> output;
+    int max_memory = 0;          // From the first line of the file
+    std::vector<Node> nodes;     // All operator nodes
 };
 
-ParseResult parseFile(const std::string& filename);
+// Parse the file and return both the node list and memory cap.
+ParseResult parse_file(const std::string& path);
+ParseResult parse_stream(std::istream& is);
