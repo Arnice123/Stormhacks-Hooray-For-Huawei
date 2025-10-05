@@ -19,8 +19,12 @@ long MinimizeRecomputation::maxMemorySpike(const std::vector<Node> &nodes) {
     long max = 0;
     long curr = 0;
     std::map<std::string, bool> nodesInMemory;
-    for (std::vector<Node>::reverse_iterator riter = nodes.rbegin(); riter != nodes.rend(); ++riter) {
-        // do something
+    for (auto riter = nodes.rbegin(); riter != nodes.rend(); ++riter) {
+        Node currNode = *riter;
+        if (!nodesInMemory.at(currNode.getName())) {
+            curr += currNode.getOutputMem();
+            nodesInMemory[currNode.getName()]  = true;
+        }
     }
     return max;
 }
