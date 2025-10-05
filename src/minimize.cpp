@@ -1,7 +1,5 @@
 #include "minimize.h"
 
-#include "map"
-
 std::vector<Node> MinimizeRecomputation::ExecuteOrder(const std::vector<Node> &all_nodes, const std::string &output_name,
                                                       long total_memory) {
     // Use unused parameter
@@ -15,7 +13,7 @@ std::vector<Node> MinimizeRecomputation::ExecuteOrder(const std::vector<Node> &a
     for (auto maxMemUsageNameItr = outputMemories.rbegin();
          memoryUsage > total_memory && maxMemUsageNameItr != outputMemories.rend();
          maxMemUsageNameItr++) {
-
+            
         std::string maxMemUsageName = maxMemUsageNameItr->first;
         Node maxMemUsageNode = nameToNode.at(maxMemUsageName);
 
@@ -54,7 +52,7 @@ long MinimizeRecomputation::maxMemorySpike(const std::vector<Node> &nodes) {
     return max;
 }
 
-std::map<std::string, long> getNodeOutputMemories(const std::vector<Node> &nodes) {
+std::map<std::string, long> MinimizeRecomputation::getNodeOutputMemories(const std::vector<Node> &nodes) {
     std::map<std::string, long> memories;
 
     for (auto itr = nodes.begin(); itr != nodes.end(); itr++) {
@@ -65,7 +63,7 @@ std::map<std::string, long> getNodeOutputMemories(const std::vector<Node> &nodes
     return memories;
 }
 
-std::map<std::string, Node> getNameToNode(const std::vector<Node> &nodes) {
+std::map<std::string, Node> MinimizeRecomputation::getNameToNode(const std::vector<Node> &nodes) {
     std::map<std::string, Node> nameToNode;
 
     for (auto itr = nodes.begin(); itr != nodes.end(); itr++) {
